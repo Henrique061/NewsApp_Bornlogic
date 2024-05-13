@@ -7,13 +7,13 @@
 
 import Foundation
 
-struct News : Codable {
+struct News : Codable, Equatable {
     var status: String
     var totalResults: Int
     var articles: [Article]
 }
 
-struct Article : Codable {
+struct Article : Codable, Equatable {
     var source: ArticleSource
     var author: String?
     var title: String
@@ -24,7 +24,7 @@ struct Article : Codable {
     var content: String
 }
 
-struct ArticleSource : Codable {
+struct ArticleSource : Codable, Equatable {
     var id: String?
     var name: String
 }
