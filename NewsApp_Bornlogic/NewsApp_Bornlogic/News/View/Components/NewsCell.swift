@@ -11,6 +11,7 @@ import UIKit
 class NewsCell: UITableViewCell {
     static let identifier = "NewsCell"
     private(set) var article: Article?
+    public var imageToSend = UIImage()
     
     //MARK: - UI COMPONENTS
     private let articleImage: UIImageView = {
@@ -75,6 +76,7 @@ class NewsCell: UITableViewCell {
                 
                 DispatchQueue.main.async {
                     self.articleImage.image = UIImage(data: data)
+                    self.imageToSend = self.articleImage.image ?? UIImage()
                 }
             }.resume()
         }

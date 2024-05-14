@@ -25,6 +25,8 @@ class NewsView: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = .white
+        self.title = "News"
+        self.navigationController?.navigationBar.prefersLargeTitles = true
 
         self.tableView.delegate = self
         self.tableView.dataSource = self
@@ -83,5 +85,13 @@ extension NewsView: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 120
+    }
+    
+    //MARK: NAVIGATE SCREEN
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let articleView = ArticleView(article: self.news?.articles[indexPath.section] ?? Article(source: ArticleSource(id: "", name: ""), title: "", description: "", url: "", publishedAt: "", content: ""))
+        
+        self.navigationController?.pushViewController(articleView, animated: true)
+        self.tableView.deselectRow(at: indexPath, animated: false)
     }
 }
