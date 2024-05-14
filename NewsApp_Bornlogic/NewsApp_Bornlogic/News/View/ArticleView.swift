@@ -48,6 +48,37 @@ class ArticleView: UIViewController {
         return label
     }()
     
+    private let accessLink: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14)
+        label.textAlignment = .left
+        label.text = "Acesse: "
+        
+        return label
+    }()
+    
+    private let articleLink: UILabel = {
+        let label = UILabel()
+        label.font = .systemFont(ofSize: 14)
+        label.textAlignment = .left
+        label.textColor = .blue
+        
+        let underlineAttribute = NSAttributedString(
+            string: "attriString",
+            attributes: [NSAttributedString.Key.underlineStyle: NSUnderlineStyle.single.rawValue]
+        )
+        label.attributedText = underlineAttribute
+        
+        return label
+    }()
+    
+    private let linkHStack: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        
+        return stack
+    }()
+    
     //MARK: - INIT
     init(article: Article) {
         self.article = article
@@ -100,6 +131,20 @@ class ArticleView: UIViewController {
         
         // conteudo
         self.articleContent.text = self.article.content
+        
+        //link
+        self.articleLink.text = self.article.url
+        let tap = UITapGestureRecognizer(target: self, action: #selector(self.onClickLabel(sender:)))
+        self.articleLink.isUserInteractionEnabled = true
+        self.articleLink.addGestureRecognizer(tap)
+    }
+    
+    // acessar link
+    @objc func onClickLabel(sender: UITapGestureRecognizer) {
+        let articleUrl = URL(string: self.article.url)
+        if let url = articleUrl {
+            UIApplication.shared.open(url)
+        }
     }
     
     //MARK: - SETUP UI
@@ -108,11 +153,15 @@ class ArticleView: UIViewController {
         self.view.addSubview(self.articleTitle)
         self.view.addSubview(self.articleDate)
         self.view.addSubview(self.articleContent)
+        self.view.addSubview(self.linkHStack)
+        self.linkHStack.addArrangedSubview(self.accessLink)
+        self.linkHStack.addArrangedSubview(self.articleLink)
         
         self.articleImage.translatesAutoresizingMaskIntoConstraints = false
         self.articleTitle.translatesAutoresizingMaskIntoConstraints = false
         self.articleDate.translatesAutoresizingMaskIntoConstraints = false
         self.articleContent.translatesAutoresizingMaskIntoConstraints = false
+        self.linkHStack.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
             // imagem
@@ -133,7 +182,12 @@ class ArticleView: UIViewController {
             // conteudo
             self.articleContent.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
             self.articleContent.topAnchor.constraint(equalTo: self.articleDate.bottomAnchor, constant: 15),
-            self.articleContent.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.85)
+            self.articleContent.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.85),
+            
+            // hstack do link
+            self.linkHStack.centerXAnchor.constraint(equalTo: self.view.centerXAnchor),
+            self.linkHStack.topAnchor.constraint(equalTo: self.articleContent.bottomAnchor, constant: 15),
+            self.linkHStack.widthAnchor.constraint(equalTo: self.view.widthAnchor, multiplier: 0.85),
         ])
     }
 }
