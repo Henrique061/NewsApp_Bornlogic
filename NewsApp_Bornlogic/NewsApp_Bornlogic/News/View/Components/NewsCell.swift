@@ -18,6 +18,7 @@ class NewsCell: UITableViewCell {
         let image = UIImageView()
         image.layer.cornerRadius = 10
         image.clipsToBounds = true
+        image.contentMode = .scaleToFill
         
         return image
     }()
@@ -79,6 +80,8 @@ class NewsCell: UITableViewCell {
                     self.imageToSend = self.articleImage.image ?? UIImage()
                 }
             }.resume()
+        } else {
+            self.articleImage.image = UIImage(named: "Sem_imagem")
         }
         
         self.articleTitle.text = self.article?.title

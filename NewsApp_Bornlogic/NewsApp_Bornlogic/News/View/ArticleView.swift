@@ -15,6 +15,7 @@ class ArticleView: UIViewController {
     private let articleImage: UIImageView = {
         let image = UIImageView()
         image.clipsToBounds = true
+        image.contentMode = .scaleToFill
         
         return image
     }()
@@ -78,6 +79,8 @@ class ArticleView: UIViewController {
                     self.articleImage.image = UIImage(data: data)
                 }
             }.resume()
+        } else {
+            self.articleImage.image = UIImage(named: "Sem_imagem")
         }
         
         // titulo
