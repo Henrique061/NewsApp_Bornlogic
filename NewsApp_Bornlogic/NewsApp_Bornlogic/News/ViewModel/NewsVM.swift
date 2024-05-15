@@ -41,8 +41,8 @@ class NewsVM {
         completion()
     }
     
-    //MARK: ORDER
-    public func updateOrder(menuTitle: String) {
+    //MARK: SORT
+    public func updateSort(menuTitle: String) {
         let recentTitle = "Mais recente"
 
         // mais recente
@@ -52,6 +52,7 @@ class NewsVM {
             return
         }
         
+        // mais antigo
         self.news?.articles.sort(by: { $0.publishedAt < $1.publishedAt })
         self.filteredArticles.sort(by: { $0.publishedAt < $1.publishedAt })
     }

@@ -13,6 +13,7 @@ class NewsView: UIViewController {
     var newsVm = NewsVM()
     private var clickedSearch = false
     private var orderedByRecent = true
+    private var isInList = true
     
     //MARK: - UI
     // table
@@ -24,37 +25,53 @@ class NewsView: UIViewController {
         return tv
     }()
     
+    // collection
+    let collectionView: UICollectionView = {
+        let layout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .vertical
+        
+        let cv = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        cv.backgroundColor = .systemGray6
+        cv.register(NewsCollectionCell.self, forCellWithReuseIdentifier: NewsCollectionCell.identifier)
+        
+        return cv
+    }()
+    
     // search bar
     let searchController = UISearchController(searchResultsController: nil)
+    
+    // segmented control
+    var segmentedControl = UISegmentedControl()
     
     //MARK: - VIEW LIFECYCLE
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.view.backgroundColor = .white
+        self.view.backgroundColor = .systemGray6
         self.title = "News"
         self.navigationController?.navigationBar.prefersLargeTitles = true
 
         self.tableView.delegate = self
         self.tableView.dataSource = self
+        self.collectionView.delegate = self
+        self.collectionView.dataSource = self
         self.searchController.searchBar.delegate = self
         
         self.setupSearchController()
-        self.setupOrderMenu()
+        self.setupSortMenu()
+        self.setupSegmentedControl()
         
         NewsCall().getNews { news in
             self.newsVm.news = news
-            self.configureTable()
+            self.newsVm.updateSort(menuTitle: "Mais recente")
+            self.tableView.reloadData()
+            self.collectionView.reloadData()
         }
-    }
-    
-    //MARK: - FUNCS
-    private func configureTable() {
-        view.addSubview(self.tableView)
         
-        self.tableView.frame = self.view.bounds
-        self.tableView.reloadData()
+        self.setupSegmentedUi()
+        self.setupTableUi()
     }
     
+    //MARK: - SEARCH
     private func setupSearchController() {
         self.searchController.searchResultsUpdater = self
         self.searchController.obscuresBackgroundDuringPresentation = false
@@ -66,7 +83,8 @@ class NewsView: UIViewController {
         self.navigationItem.hidesSearchBarWhenScrolling = false
     }
     
-    private func setupOrderMenu() {
+    //MARK: - SORT
+    private func setupSortMenu() {
         let recentTitle = "Mais recente"
         let oldestTitle = "Mais antigo"
         
@@ -75,8 +93,13 @@ class NewsView: UIViewController {
             if action.title == oldestTitle && !self.orderedByRecent { return }
             
             self.orderedByRecent = !self.orderedByRecent
-            self.newsVm.updateOrder(menuTitle: action.title)
-            self.tableView.reloadData()
+            self.newsVm.updateSort(menuTitle: action.title)
+            
+            if self.isInList {
+                self.tableView.reloadData()
+            } else {
+                self.collectionView.reloadData()
+            }
         }
         
         let orderMenu = UIMenu(
@@ -92,7 +115,67 @@ class NewsView: UIViewController {
         
         self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "line.3.horizontal.decrease.circle"), style: .plain, target: self, action: nil)
         self.navigationItem.rightBarButtonItem?.menu = orderMenu
+    }
+    
+    //MARK: - SEGMENTED CONTROL
+    private func setupSegmentedControl() {
+        let segmentedItems: [UIImage] = [
+            UIImage(systemName: "list.bullet") ?? UIImage(),
+            UIImage(systemName: "square.grid.2x2") ?? UIImage()
+        ]
         
+        self.segmentedControl = UISegmentedControl(items: segmentedItems)
+        self.segmentedControl.selectedSegmentIndex = 0
+        self.segmentedControl.addTarget(self, action: #selector(disposeChange(_:)), for: .valueChanged)
+    }
+    
+    @objc private func disposeChange(_ segmentedControl: UISegmentedControl) {
+        switch segmentedControl.selectedSegmentIndex {
+            case 0: selectedDispose() // alternou para lista
+            default: selectedDispose(byList: false) // alternou para collection
+        }
+    }
+    
+    private func selectedDispose(byList: Bool = true) {
+        if !byList {
+            self.tableView.removeFromSuperview()
+            self.collectionView.reloadData()
+            self.setupCollectionUi()
+        } else {
+            self.collectionView.removeFromSuperview()
+            self.tableView.reloadData()
+            self.setupTableUi()
+        }
+        
+        self.isInList = !self.isInList
+    }
+    
+    //MARK: - SETUP UI
+    private func setupSegmentedUi() {
+        self.view.addSubview(self.segmentedControl)
+        self.segmentedControl.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            self.segmentedControl.topAnchor.constraint(equalTo: self.view.layoutMarginsGuide.topAnchor),
+            self.segmentedControl.leadingAnchor.constraint(equalTo: self.view.layoutMarginsGuide.leadingAnchor),
+        ])
+    }
+    
+    private func setupTableUi() {
+        self.view.addSubview(self.tableView)
+        self.tableView.translatesAutoresizingMaskIntoConstraints = false
+        self.tableView.frame = CGRect(x: 0, y: view.bounds.height * 0.3, width: view.bounds.width, height: view.bounds.height)
+    }
+    
+    private func setupCollectionUi() {
+        self.view.addSubview(self.collectionView)
+        self.collectionView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            self.collectionView.topAnchor.constraint(equalTo: self.segmentedControl.bottomAnchor, constant: 15),
+            self.collectionView.bottomAnchor.constraint(equalTo: self.view.bottomAnchor),
+            self.collectionView.widthAnchor.constraint(equalTo: self.view.widthAnchor)
+        ])
     }
 }
 
@@ -100,7 +183,11 @@ class NewsView: UIViewController {
 extension NewsView: UISearchResultsUpdating, UISearchBarDelegate {
     func updateSearchResults(for searchController: UISearchController) {
         self.newsVm.updateSearchController(text: searchController.searchBar.text, clickedSearch: self.clickedSearch, completion: {
-            self.tableView.reloadData()
+            if self.isInList {
+                self.tableView.reloadData()
+            } else {
+                self.collectionView.reloadData()
+            }
         })
         
         if self.clickedSearch == false { self.clickedSearch = true }
@@ -108,67 +195,11 @@ extension NewsView: UISearchResultsUpdating, UISearchBarDelegate {
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         self.newsVm.updateSearchController(text: String(), completion: {
-            self.tableView.reloadData()
+            if self.isInList {
+                self.tableView.reloadData()
+            } else {
+                self.collectionView.reloadData()
+            }
         })
-    }
-}
-
-//MARK: - TABLE VIEW
-extension NewsView: UITableViewDelegate, UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        1
-    }
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        let inSearchMode = self.newsVm.isInSearchMode(self.searchController)
-        return inSearchMode ? self.newsVm.filteredArticles.count : self.newsVm.news?.articles.count ?? 0
-    }
-    
-    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 5
-    }
-    
-    func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return 5
-    }
-    
-    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return UIView()
-    }
-    
-    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return UIView()
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cell = tableView.dequeueReusableCell(withIdentifier: NewsCell.identifier, for: indexPath) as? NewsCell else {
-            fatalError("Não foi possível realizar o dequeue da NewsCell na NewsView")
-        }
-        let standardArticle = Article(source: ArticleSource(id: "", name: ""), title: "", description: "", url: "", publishedAt: "", content: "")
-        
-        let inSearchMode = self.newsVm.isInSearchMode(self.searchController)
-        
-        let article = inSearchMode ? self.newsVm.filteredArticles[indexPath.section] : self.newsVm.news?.articles[indexPath.section]
-        
-        cell.configureArticle(with: article ?? standardArticle)
-        
-        return cell
-    }
-    
-    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 120
-    }
-    
-    //MARK: NAVIGATE SCREEN
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let standardArticle = Article(source: ArticleSource(id: "", name: ""), title: "", description: "", url: "", publishedAt: "", content: "")
-        let inSearchMode = self.newsVm.isInSearchMode(self.searchController)
-        
-        let articleView = inSearchMode ? 
-        ArticleView(article: self.newsVm.filteredArticles[indexPath.section]) :
-        ArticleView(article: self.newsVm.news?.articles[indexPath.section] ?? standardArticle)
-        
-        self.navigationController?.pushViewController(articleView, animated: true)
-        self.tableView.deselectRow(at: indexPath, animated: false)
     }
 }

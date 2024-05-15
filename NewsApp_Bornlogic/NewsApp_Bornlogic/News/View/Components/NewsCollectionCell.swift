@@ -1,18 +1,26 @@
 //
-//  NewsCell.swift
+//  NewsCollectionCell.swift
 //  NewsApp_Bornlogic
 //
-//  Created by Henrique Assis on 13/05/24.
+//  Created by Henrique Assis on 15/05/24.
 //
 
 import Foundation
 import UIKit
 
-class NewsCell: UITableViewCell {
-    static let identifier = "NewsTableCell"
+class NewsCollectionCell: UICollectionViewCell {
+    static let identifier = "NewsCollectionCell"
     private(set) var article: Article?
     
     //MARK: - UI COMPONENTS
+    private let backgroundFrame: UIView = {
+        let bg = UIView(frame: .zero)
+        bg.layer.cornerRadius = 10
+        bg.backgroundColor = .white
+        
+        return bg
+    }()
+    
     private let articleImage: UIImageView = {
         let image = UIImageView()
         image.layer.cornerRadius = 10
@@ -54,17 +62,12 @@ class NewsCell: UITableViewCell {
         return label
     }()
     
-    //MARK: - INIT
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
-        self.setupUi()
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
     //MARK: - FUNCS
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        self.articleImage.image = nil
+    }
+    
     public func configureArticle(with article: Article) {
         self.article = article
         
@@ -88,38 +91,45 @@ class NewsCell: UITableViewCell {
     }
     
     //MARK: - SETUP UI
-    private func setupUi() {
-        self.addSubview(self.articleTitle)
-        self.addSubview(self.articleImage)
-        self.addSubview(self.articleAuthor)
-        self.addSubview(self.articleDescription)
+    public func setupUi() {
+        self.addSubview(self.backgroundFrame)
+        self.backgroundFrame.addSubview(self.articleImage)
+        self.backgroundFrame.addSubview(self.articleTitle)
+        self.backgroundFrame.addSubview(self.articleAuthor)
+        self.backgroundFrame.addSubview(self.articleDescription)
         
-        self.articleTitle.translatesAutoresizingMaskIntoConstraints = false
+        self.backgroundFrame.translatesAutoresizingMaskIntoConstraints = false
         self.articleImage.translatesAutoresizingMaskIntoConstraints = false
+        self.articleTitle.translatesAutoresizingMaskIntoConstraints = false
         self.articleAuthor.translatesAutoresizingMaskIntoConstraints = false
         self.articleDescription.translatesAutoresizingMaskIntoConstraints = false
         
         NSLayoutConstraint.activate([
+            //bg
+            self.backgroundFrame.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            self.backgroundFrame.widthAnchor.constraint(equalTo: self.widthAnchor),
+            self.backgroundFrame.heightAnchor.constraint(equalTo: self.heightAnchor),
+            
             // imagem
-            self.articleImage.centerYAnchor.constraint(equalTo: self.centerYAnchor),
-            self.articleImage.leadingAnchor.constraint(equalTo: self.layoutMarginsGuide.leadingAnchor),
-            self.articleImage.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 0.25),
-            self.articleImage.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.75),
+            self.articleImage.centerXAnchor.constraint(equalTo: self.centerXAnchor),
+            self.articleImage.widthAnchor.constraint(equalTo: self.widthAnchor, multiplier: 0.8),
+            self.articleImage.heightAnchor.constraint(equalTo: self.heightAnchor, multiplier: 0.5),
+            self.articleImage.topAnchor.constraint(equalTo: self.topAnchor, constant: 15),
             
             // titulo
-            self.articleTitle.topAnchor.constraint(equalTo: self.topAnchor, constant: 15),
-            self.articleTitle.leadingAnchor.constraint(equalTo: self.articleImage.trailingAnchor, constant: 16),
-            self.articleTitle.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -10),
+            self.articleTitle.topAnchor.constraint(equalTo: self.articleImage.bottomAnchor, constant: 15),
+            self.articleTitle.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 15),
+            self.articleTitle.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -15),
             
             // autor
             self.articleAuthor.topAnchor.constraint(equalTo: self.articleTitle.bottomAnchor, constant: 5),
-            self.articleAuthor.leadingAnchor.constraint(equalTo: self.articleImage.trailingAnchor, constant: 16),
-            self.articleAuthor.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -10),
+            self.articleAuthor.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 15),
+            self.articleAuthor.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -15),
             
             // descricao
             self.articleDescription.topAnchor.constraint(equalTo: self.articleAuthor.bottomAnchor, constant: 5),
-            self.articleDescription.leadingAnchor.constraint(equalTo: self.articleImage.trailingAnchor, constant: 16),
-            self.articleDescription.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -10),
+            self.articleDescription.leadingAnchor.constraint(equalTo: self.leadingAnchor, constant: 15),
+            self.articleDescription.trailingAnchor.constraint(equalTo: self.trailingAnchor, constant: -15),
         ])
     }
 }
