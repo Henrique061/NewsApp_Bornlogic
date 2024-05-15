@@ -76,7 +76,7 @@ class NewsView: UIViewController {
         self.searchController.searchResultsUpdater = self
         self.searchController.obscuresBackgroundDuringPresentation = false
         self.searchController.hidesNavigationBarDuringPresentation = false
-        self.searchController.searchBar.placeholder = "Procurar Notícias"
+        self.searchController.searchBar.placeholder = "Search news"
         
         self.navigationItem.searchController = self.searchController
         self.definesPresentationContext = false

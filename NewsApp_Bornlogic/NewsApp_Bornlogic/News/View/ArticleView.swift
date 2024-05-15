@@ -52,7 +52,7 @@ class ArticleView: UIViewController {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14)
         label.textAlignment = .left
-        label.text = "Acesse: "
+        label.text = "Access: "
         
         return label
     }()
@@ -121,7 +121,7 @@ class ArticleView: UIViewController {
         let isoDateFormatter = ISO8601DateFormatter()
         if let date = isoDateFormatter.date(from: self.article.publishedAt) {
             let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "pt-BR")
+            formatter.locale = Locale(identifier: "en-US")
             formatter.dateStyle = .long
             let formattedDate = formatter.string(from: date)
             self.articleDate.text = formattedDate
