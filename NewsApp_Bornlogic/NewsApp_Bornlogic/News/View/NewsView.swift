@@ -12,9 +12,10 @@ class NewsView: UIViewController {
     //MARK: - VARIABLES
     var newsVm = NewsVM()
     private var clickedSearch = false
-
+    private var orderedByRecent = true
     
     //MARK: - UI
+    // table
     let tableView: UITableView = {
         let tv = UITableView(frame: .zero, style: .insetGrouped)
         
@@ -23,6 +24,7 @@ class NewsView: UIViewController {
         return tv
     }()
     
+    // search bar
     let searchController = UISearchController(searchResultsController: nil)
     
     //MARK: - VIEW LIFECYCLE
@@ -31,13 +33,13 @@ class NewsView: UIViewController {
         self.view.backgroundColor = .white
         self.title = "News"
         self.navigationController?.navigationBar.prefersLargeTitles = true
-        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "line.3.horizontal.decrease.circle"), style: .plain, target: self, action: #selector(onTapOrder))
 
         self.tableView.delegate = self
         self.tableView.dataSource = self
         self.searchController.searchBar.delegate = self
         
         self.setupSearchController()
+        self.setupOrderMenu()
         
         NewsCall().getNews { news in
             self.newsVm.news = news
@@ -64,7 +66,32 @@ class NewsView: UIViewController {
         self.navigationItem.hidesSearchBarWhenScrolling = false
     }
     
-    @objc private func onTapOrder() {
+    private func setupOrderMenu() {
+        let recentTitle = "Mais recente"
+        let oldestTitle = "Mais antigo"
+        
+        let orderHandler: UIActionHandler = { action in
+            if action.title == recentTitle && self.orderedByRecent { return }
+            if action.title == oldestTitle && !self.orderedByRecent { return }
+            
+            self.orderedByRecent = !self.orderedByRecent
+            self.newsVm.updateOrder(menuTitle: action.title)
+            self.tableView.reloadData()
+        }
+        
+        let orderMenu = UIMenu(
+            title: String(),
+            image: UIImage(systemName: "questionmark.circle.fill"),
+            identifier: .none,
+            options: .singleSelection,
+            children: [
+                UIAction(title: recentTitle, state: .on, handler: orderHandler),
+                UIAction(title: oldestTitle, handler: orderHandler)
+            ]
+        )
+        
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "line.3.horizontal.decrease.circle"), style: .plain, target: self, action: nil)
+        self.navigationItem.rightBarButtonItem?.menu = orderMenu
         
     }
 }
@@ -84,10 +111,6 @@ extension NewsView: UISearchResultsUpdating, UISearchBarDelegate {
             self.tableView.reloadData()
         })
     }
-}
-
-extension NewsView {
-    
 }
 
 //MARK: - TABLE VIEW
