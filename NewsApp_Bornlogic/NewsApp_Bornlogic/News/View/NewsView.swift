@@ -10,10 +10,9 @@ import UIKit
 
 class NewsView: UIViewController {
     //MARK: - VARIABLES
-    var news: News?
+    var newsVm = NewsVM()
     private var clickedSearch = false
-    
-    private(set) var filteredArticles: [Article] = []
+
     
     //MARK: - UI
     let tableView: UITableView = {
@@ -32,6 +31,7 @@ class NewsView: UIViewController {
         self.view.backgroundColor = .white
         self.title = "News"
         self.navigationController?.navigationBar.prefersLargeTitles = true
+        self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "line.3.horizontal.decrease.circle"), style: .plain, target: self, action: #selector(onTapOrder))
 
         self.tableView.delegate = self
         self.tableView.dataSource = self
@@ -40,7 +40,7 @@ class NewsView: UIViewController {
         self.setupSearchController()
         
         NewsCall().getNews { news in
-            self.news = news
+            self.newsVm.news = news
             self.configureTable()
         }
     }
@@ -63,47 +63,31 @@ class NewsView: UIViewController {
         self.definesPresentationContext = false
         self.navigationItem.hidesSearchBarWhenScrolling = false
     }
+    
+    @objc private func onTapOrder() {
+        
+    }
 }
 
 //MARK: - SEARCH FUNCS
 extension NewsView: UISearchResultsUpdating, UISearchBarDelegate {
     func updateSearchResults(for searchController: UISearchController) {
-        self.updateSearchController(text: searchController.searchBar.text)
+        self.newsVm.updateSearchController(text: searchController.searchBar.text, clickedSearch: self.clickedSearch, completion: {
+            self.tableView.reloadData()
+        })
+        
+        if self.clickedSearch == false { self.clickedSearch = true }
     }
     
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        self.updateSearchController(text: String())
+        self.newsVm.updateSearchController(text: String(), completion: {
+            self.tableView.reloadData()
+        })
     }
 }
 
 extension NewsView {
-    public func isInSearchMode(_ searchController: UISearchController) -> Bool {
-        let isActive = searchController.isActive
-        let searchText = searchController.searchBar.text ?? String()
-        
-        return isActive && !searchText.isEmpty
-    }
     
-    public func updateSearchController(text searchBarText: String?) {
-        // para evitar atualizacao da table ao clicar na search bar pela primeira vez
-        // e de dar reload ao clicar quando a search estiver sem texto
-        if !clickedSearch { clickedSearch = true; return }
-        if self.filteredArticles == news?.articles && searchBarText?.isEmpty ?? true { return }
-        
-        self.filteredArticles = news?.articles ?? []
-        
-        if let searchText = searchBarText?.lowercased() {
-            guard !searchText.isEmpty else { self.tableView.reloadData(); return }
-            
-            self.filteredArticles = self.filteredArticles.filter({ article in
-                article.title.lowercased().contains(searchText) ||
-                article.author?.lowercased().contains(searchText) ?? false ||
-                article.description.lowercased().contains(searchText)
-            })
-        }
-
-        self.tableView.reloadData()
-    }
 }
 
 //MARK: - TABLE VIEW
@@ -113,8 +97,8 @@ extension NewsView: UITableViewDelegate, UITableViewDataSource {
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        let inSearchMode = self.isInSearchMode(self.searchController)
-        return inSearchMode ? self.filteredArticles.count : self.news?.articles.count ?? 0
+        let inSearchMode = self.newsVm.isInSearchMode(self.searchController)
+        return inSearchMode ? self.newsVm.filteredArticles.count : self.newsVm.news?.articles.count ?? 0
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
@@ -139,9 +123,9 @@ extension NewsView: UITableViewDelegate, UITableViewDataSource {
         }
         let standardArticle = Article(source: ArticleSource(id: "", name: ""), title: "", description: "", url: "", publishedAt: "", content: "")
         
-        let inSearchMode = self.isInSearchMode(self.searchController)
+        let inSearchMode = self.newsVm.isInSearchMode(self.searchController)
         
-        let article = inSearchMode ? self.filteredArticles[indexPath.section] : self.news?.articles[indexPath.section]
+        let article = inSearchMode ? self.newsVm.filteredArticles[indexPath.section] : self.newsVm.news?.articles[indexPath.section]
         
         cell.configureArticle(with: article ?? standardArticle)
         
@@ -155,11 +139,11 @@ extension NewsView: UITableViewDelegate, UITableViewDataSource {
     //MARK: NAVIGATE SCREEN
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let standardArticle = Article(source: ArticleSource(id: "", name: ""), title: "", description: "", url: "", publishedAt: "", content: "")
-        let inSearchMode = self.isInSearchMode(self.searchController)
+        let inSearchMode = self.newsVm.isInSearchMode(self.searchController)
         
         let articleView = inSearchMode ? 
-            ArticleView(article: self.filteredArticles[indexPath.section]) :
-            ArticleView(article: self.news?.articles[indexPath.section] ?? standardArticle)
+        ArticleView(article: self.newsVm.filteredArticles[indexPath.section]) :
+        ArticleView(article: self.newsVm.news?.articles[indexPath.section] ?? standardArticle)
         
         self.navigationController?.pushViewController(articleView, animated: true)
         self.tableView.deselectRow(at: indexPath, animated: false)
